@@ -8,17 +8,9 @@ import numpy as np
 from time import sleep
 import pandas as pd
 
-import subprocess
-import warnings
-from functools import reduce
-
-import cartopy
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from matplotlib import cm
-from matplotlib.lines import Line2D
 
-warnings.filterwarnings("ignore", category=FutureWarning) 
 
 def spatial_overlays(df1, df2, how='intersection'):
     """
@@ -83,112 +75,6 @@ def spatial_overlays(df1, df2, how='intersection'):
         df1 = df1.loc[df1.geometry.is_empty==False].copy()
         df1.drop(['bbox', 'histreg', 'new_g'], axis=1, inplace=True)
         return df1
-
-def create_poly_files(base_path,global_shape,save_shapefile=True):
-
-    """
-    This function will create the .poly files from the world shapefile. These
-    .poly files are used to extract data from the openstreetmap files.
-    
-    This function is adapted from the Export OSM Poly function in QGIS.
-    
-    Args:
-        *base_path* : The base path to location of all files.
-        
-        *global_shape* : The exact path to the global shapefile used to create the poly files.
-        
-        *save_shape_file* : When set to True, the new shapefile with the countries that we include in this analysis will be saved.       
-    
-    Returns:
-        A .poly file for each country in the 'poly_files' directory in the global working directory.
-    """     
-    
-# =============================================================================
-#     """ Create output dir for .poly files if it is doesnt exist yet"""
-# =============================================================================
-    poly_dir = os.path.join(base_path,'poly_files')
-    
-    if not os.path.exists(poly_dir):
-        os.makedirs(poly_dir)
-# =============================================================================
-#     """ Set the paths for the files we are going to use """
-# =============================================================================
-
-    wb_poly_out = os.path.join(base_path,'input_data','country_shapes_dev.shp')
-    wb_country_in = os.path.join(base_path,'input_data','wbccodes2014.csv')
-    
-# =============================================================================
-#   """Load country shapes and country list and only keep the required countries"""
-# =============================================================================
-    if global_shape.endswith('gdb'):
-        wb_poly = gpd.read_file(global_shape,layer='g2015_2014_0')
-    elif global_shape.endswith('.shp'):
-        wb_poly = gpd.read_file(global_shape)
-        
-    wb_country = pd.read_csv(wb_country_in,header=0,index_col=0)
-    
-    # filter high income countries from country file
-    country_list = wb_country['country'].loc[wb_country['wbregion']=='YHI']
-    # filter polygon file
-    wb_poly = wb_poly.loc[wb_poly['ISO3166_1_Alpha_3'].isin(country_list)]
-    wb_poly.crs = {'init' :'epsg:4326'}
-
-    # and save the new country shapefile if requested
-    if save_shapefile == True:
-        wb_poly.to_file(wb_poly_out)
-    
-    # we need to simplify the country shapes a bit. If the polygon is too diffcult,
-    # osmconvert cannot handle it.
-    wb_poly['geometry'] = wb_poly.simplify(tolerance = 0.005, preserve_topology=False)
-
-
-# =============================================================================
-#   """ The important part of this function: create .poly files to clip the country 
-#   data from the openstreetmap file """    
-# =============================================================================
-    num = 0
-    # iterate over the counties (rows) in the world shapefile
-    for f in wb_poly.iterrows():
-        f = f[1]
-        num = num + 1
-        geom=f.geometry
-        
-        # this will create a list of the different subpolygons
-        if geom.geom_type == 'MultiPolygon':
-            polygons = geom
-        
-        # the list will be lenght 1 if it is just one polygon
-        elif geom.geom_type == 'Polygon':
-            polygons = [geom]
-
-        # define the name of the output file, based on the ISO3 code
-        attr=f['ISO3166_1_Alpha_3']
-        
-        # start writing the .poly file
-        f = open(poly_dir + "/" + attr +'.poly', 'w')
-        f.write(attr + "\n")
-
-        i = 0
-        
-        # loop over the different polygons, get their exterior and write the 
-        # coordinates of the ring to the .poly file
-        for polygon in polygons:
-            polygon = np.array(polygon.exterior)
-
-            j = 0
-            f.write(str(i) + "\n")
-
-            for ring in polygon:
-                j = j + 1
-                f.write("    " + str(ring[0]) + "     " + str(ring[1]) +"\n")
-
-            i = i + 1
-            # close the ring of one subpolygon if done
-            f.write("END" +"\n")
-
-        # close the file when done
-        f.write("END" +"\n")
-        f.close()
 
 
 def get_country(country,continent_osm,base_path,overwrite=False,RAI=False):  
@@ -273,67 +159,6 @@ def get_country(country,continent_osm,base_path,overwrite=False,RAI=False):
     return load_country
 
 
-def create_figure(country,load_country,base_path,report=False):
-    """
-    Create a figure of the road network
-    
-    Args:
-        *country* : The ISO-code of the country.
-        
-        *load_country* : The geodataframe of the country.
-        
-        *base_path* : The base path to the location of all files and scripts.
-        
-        *report* : Set to False by default. When set to True, the figure will not be saved with a figure title.
-    Returns:
-        A .png file with a classified road system of the specified country.
-    """
-    # Create figure
-    plt.figure()
-    
-    proj_lat_lon = cartopy.crs.PlateCarree()
-    ax = plt.axes([0.0,0.0,1.0, 1.0] ,facecolor='#D0E3F4', projection=proj_lat_lon)
-
-    cmap = cm.get_cmap('Set1', 4) # Colour map (there are many others)
-    cmaplist = [cmap(i) for i in range(cmap.N)]
-#        cmap = cmap.from_list('Custom cmap', cmaplist, cmap.N)
-    cmap = mpl.colors.LinearSegmentedColormap.from_list('Custom cmap', cmaplist, cmap.N)
-
-    colors_legend = []
-    for i in range(cmap.N):
-        rgb = cmap(i)[:3] # will return rgba, we take only first 3 so we get rgb
-        colors_legend.append(mpl.colors.rgb2hex(rgb))
-
-    color1 =  Line2D([0], [0], linestyle="none", marker="o", markersize=10, markeredgewidth=0.0,markerfacecolor=colors_legend[0])
-    color2 =  Line2D([0], [0], linestyle="none", marker="o", markersize=10, markeredgewidth=0.0,markerfacecolor=colors_legend[1])
-    color3 =  Line2D([0], [0], linestyle="none", marker="o", markersize=10, markeredgewidth=0.0,markerfacecolor=colors_legend[2])
-    color4 =  Line2D([0], [0], linestyle="none", marker="o", markersize=10, markeredgewidth=0.0,markerfacecolor=colors_legend[3])
-
-    legend_handles=['primary','secondary','tertiary','track']
-    
-    map_linewidth = dict(zip(legend_handles,[0.8,0.5,0.3,0.1]))
-    
-    load_country = load_country.loc[load_country['roads'] != 'other']
-    lw_all = list(load_country['roads'].map(lambda x: (map_linewidth[x])) )
-    tot_bounds = list(load_country.total_bounds)
-    ax.set_extent([tot_bounds[0]-0.1,tot_bounds[2]+0.1,tot_bounds[1]-0.1,tot_bounds[3]+0.1] , crs=proj_lat_lon)
-    world = gpd.read_file(os.path.join(base_path,'input_data','country_shapes.shp'))
-    world.plot(ax=ax,color='#FEF9E0',lw=0.3,edgecolor='k')
-               
-    load_country.plot(ax=ax,column='roads',linewidth=lw_all,categorical=True,legend=True,cmap=cmap)
-
-    ax.legend([color1,color2,color3,color4],legend_handles,numpoints=1, loc=1) 
-    ax.background_patch.set_facecolor('#D0E3F4')
-     
-    # if report set to True, the title will not be printed.
-    if report == False:
-        admin_name = world['ADM0_NAME'].loc[world['ISO3166_1_']==country].values[0]
-        plt.title('Road network of %s' % admin_name,fontweight='bold')
-
-    figure_out= os.path.join(base_path,'Figures','%s.png' % country)
-    plt.savefig(figure_out,dpi=500,bbox_inches='tight')
-
-
 
 def clip_osm(continent_osm,country_poly,country_pbf):
     """ Clip the country osm file from the larger continent (or planet) file and save to a new osm.pbf file. 
@@ -398,77 +223,8 @@ def line_length(line, ellipsoid='WGS-84'):
             vincenty(a, b, ellipsoid=ellipsoid).kilometers
             for a, b in pairwise(list([t[::-1] for t in list(line.coords)]))
         )
-def line_intersection(geo1, geo2):
-    try:
-        return geo1.intersects(geo2)
-    except:
-        pass
-
-        
-def line_length_2(line, ellipsoid='WGS-84'):
-    """Length of a line in meters, given in geographic coordinates.
-    Adapted from https://gis.stackexchange.com/questions/4022/looking-for-a-pythonic-way-to-calculate-the-length-of-a-wkt-linestring#answer-115285
-    Args:
-        *line* : A shapely LineString object with WGS-84 coordinates.
-        
-        *ellipsoid* : The string name of an ellipsoid that `geopy` understands (see http://geopy.readthedocs.io/en/latest/#module-geopy.distance).
-    Returns:
-        The length of the line in meters.
-    """
-    if line.geometryType() == 'MultiLineString':
-        return sum(line_length(segment) for segment in line)
-
-    return sum(
-        vincenty(a, b, ellipsoid=ellipsoid).kilometers
-        for a, b in pairwise(line)
-    )
 
 
-def unzip_worldpop(country,base_path,temp_path):
-
-    """Function to unzip the worldpop files for the following islands (not included in the main worldpop file):
-        - Fiji
-        - Kiribati
-        - Marshall Islands
-        - Micronesia (Federated States of)
-        - Palau
-        - Papua New Guinea
-        - Samoa
-        - Solomon Islands
-        - Tonga
-        - Vanuatu
-    This should work out of the box if *7zip* is installed.
-    
-    If not: the easiest way to get this to run, is to move the *7z.exe* into the **scripts** directory. The other option would be to add the *7zip* directory to your environmental variables.
-    Args:
-        *country* : The ISO-code of the country.
-        *base_path* : The base path to the location of all files and scripts.
-        
-        *temp_path* : The path to which we temporarily write the unzipped file.
-        
-    Returns:
-        An unzipped worldpop GeoTIFF file for the specified country.
-        
-    """
-    
-    archiveman = r'7z' # 7z.exe comes with 7-zip
-
-    """Load file paths"""
-    poppath = os.path.join(base_path,'Worldpop')
-
-    islands = ['FJI','KIR','MHL','FSM','PLW','PNG','WSM','SLB','TON','VUT']
-    islands_full = ['Fiji','Kiribati','Marshall Islands','Micronesia (Federated States of)','Palau','Papua New Guinea','Samoa','Solomon Islands','Tonga','Vanuatu']
-
-    map_isl_names = dict(zip(islands,islands_full))
-
-    island_full_name = map_isl_names[country]
-    archive_name = os.path.join(poppath,'%s 100m Population.7z' % island_full_name)
-    if country == 'KIR':
-        _ = subprocess.check_output([archiveman, 'e','-aos', archive_name, '-o{}'.format(temp_path), 'popmap15adj_lzw.tif'])
-    elif country == 'TON':
-        _ = subprocess.check_output([archiveman, 'e','-aos', archive_name, '-o{}'.format(temp_path), 'popmap15.tif'])
-    else:
-        _ = subprocess.check_output([archiveman, 'e','-aos', archive_name, '-o{}'.format(temp_path), 'popmap15adj.tif'])
 
 def map_roads(load_country):
 

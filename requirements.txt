@@ -1,0 +1,10 @@
+boltons==20.1.0
+geopandas==0.7.0
+geopy==1.21.0
+numpy==1.18.1
+pandas==1.0.3
+Cartopy==0.17.0
+matplotlib==3.2.1
+rasterstats==0.14.0
+shapely==1.6.4.post2
+urllib3==1.25.7
