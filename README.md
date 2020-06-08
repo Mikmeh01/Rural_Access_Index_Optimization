@@ -8,7 +8,7 @@ Change the ISO3 country parameter (BLZ for Belize for example) of the RAI_Opti n
 
 ## Output
 
-The code exports a shapefile of roads added throughout the process with the corresponding increase of RAI at each iteration
+The code exports a shapefile of roads added throughout the process with the corresponding increase of RAI at each iteration and the cost for upgrading the road (making it all-weather road)
 
 ## Installation
 
