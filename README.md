@@ -4,7 +4,7 @@ This project was used for the [Paper](https://openknowledge.worldbank.org/bitstr
 
 ## Getting Started
 
-Clone the repo and change the ISO3 country parameter (BLZ for Belize for example) of the RAI_Opti notebook and run the remaining code
+Clone the repo, change the ISO3 country parameter (BLZ for Belize for example) of the RAI_Opti notebook and run the remaining code
 
 ## Output
 
