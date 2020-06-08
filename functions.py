@@ -1,3 +1,5 @@
+""" Functions used for the pre-processing """
+
 import os
 from geopy.distance import vincenty
 from boltons.iterutils import pairwise
@@ -188,6 +190,7 @@ def create_poly_files(base_path,global_shape,save_shapefile=True):
         f.write("END" +"\n")
         f.close()
 
+
 def get_country(country,continent_osm,base_path,overwrite=False,RAI=False):  
 
     """
@@ -269,6 +272,7 @@ def get_country(country,continent_osm,base_path,overwrite=False,RAI=False):
 # =============================================================================
     return load_country
 
+
 def create_figure(country,load_country,base_path,report=False):
     """
     Create a figure of the road network
@@ -329,6 +333,8 @@ def create_figure(country,load_country,base_path,report=False):
     figure_out= os.path.join(base_path,'Figures','%s.png' % country)
     plt.savefig(figure_out,dpi=500,bbox_inches='tight')
 
+
+
 def clip_osm(continent_osm,country_poly,country_pbf):
     """ Clip the country osm file from the larger continent (or planet) file and save to a new osm.pbf file. 
     This is much faster compared to clipping the osm.pbf file while extracting through ogr2ogr.
@@ -350,6 +356,7 @@ def clip_osm(continent_osm,country_poly,country_pbf):
 
     os.system('osmconvert64 %s -B=%s --complete-ways -o=%s' %(continent_osm,country_poly,country_pbf))
 
+
 def extract_osm(country_shp,country_pbf):
     """Extract a shapefile with all the road information from the openstreetmap file.
     
@@ -366,6 +373,7 @@ def extract_osm(country_shp,country_pbf):
               -sql "SELECT highway FROM lines WHERE highway IS \
               NOT NULL" -lco ENCODING=UTF-8 '+country_shp+" " + country_pbf)    
         
+
 
 def line_length(line, ellipsoid='WGS-84'):
     """Length of a line in meters, given in geographic coordinates.
@@ -395,6 +403,7 @@ def line_intersection(geo1, geo2):
         return geo1.intersects(geo2)
     except:
         pass
+
         
 def line_length_2(line, ellipsoid='WGS-84'):
     """Length of a line in meters, given in geographic coordinates.
@@ -413,6 +422,7 @@ def line_length_2(line, ellipsoid='WGS-84'):
         vincenty(a, b, ellipsoid=ellipsoid).kilometers
         for a, b in pairwise(line)
     )
+
 
 def unzip_worldpop(country,base_path,temp_path):
 
@@ -533,13 +543,15 @@ def map_roads(load_country):
 "track_grade2":"track",
 "track_grade3":"track",
 "track_grade4":"track",
-"track_grade5":"track"
-
+"track_grade5":"track",
+"unknown":"other"
 }
     
     load_country['roads'] = load_country['fclass'].map(lambda x: (dict_map[x])) 
     
     return load_country
+
+
 def explode(gdf):
     """ 
     Explodes a geodataframe 
@@ -597,6 +609,7 @@ def Create_Buffer(gdf,epsg1,size):
     gdf1 = gdf1.to_crs(epsg=4326)
     return gdf1
 
+
 def geom_within_country(x,geo_country):
     """ Given a geometry, return the geometry of its intersection with geo_country
     Args:
@@ -610,6 +623,7 @@ def geom_within_country(x,geo_country):
         return x['geometry'].intersection(geo_country)
     else:
         return x['geometry']
+
     
 def delete_roads_urb(x,geo_urban):
     """ Given a geometry, returns the geometry of its difference with geo_country
