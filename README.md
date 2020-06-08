@@ -6,6 +6,10 @@ This project was used for the [Paper](https://openknowledge.worldbank.org/bitstr
 
 Change the ISO3 country parameter (BLZ for Belize for example) of the RAI_Opti notebook and run the remaining code
 
+# Output
+
+The code exports a shapefile of roads added throughout the process with the corresponding increase of RAI at each iteration
+
 # Installation
 
 The requirement file lists all the necessary libraries used in this project
@@ -13,6 +17,6 @@ The requirement file lists all the necessary libraries used in this project
 # References
 
 Datesets used:
-- Global Rural-Urban Mapping Project [GRUMP](https://sedac.ciesin.columbia.edu/data/collection/grump-v1): Urban Areas
+-  Urban Areas : Global Rural-Urban Mapping Project [GRUMP](https://sedac.ciesin.columbia.edu/data/collection/grump-v1)
 - Population: [WorldPop Database](https://www.worldpop.org/)
 - Roads : Open Street Map
