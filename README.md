@@ -23,4 +23,4 @@ Datesets used:
 
 ## Issues
 
-An error might occur at the first block below Country Roads if a new category of roads is added OpenStreetMap contributors. In this case, the user should add this new category inside the "map_roads" function to the functions python file
+An error might occur at the first block below Country Roads if a new category of roads is added by OpenStreetMap contributors. In this case, the user should add this new category inside the "map_roads" function to the functions python file
