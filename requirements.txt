@@ -1,7 +1,7 @@
 boltons==20.1.0
 geopandas==0.7.0
 geopy==1.21.0
-numpy==1.18.1
+numpy==1.22.0
 pandas==1.0.3
 Cartopy==0.17.0
 matplotlib==3.2.1
